@@ -1,0 +1,2252 @@
+<!DOCTYPE html>
+<html lang="es-AR" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>APP Serviclub</title>
+
+  <!-- Google Fonts: Montserrat (Hero Bold), Inter (UI) & Fraunces (Display Serif para cupones) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,700;9..144,900&family=Inter:wght@400;500;600;700;50.000;900&family=Montserrat:wght@700;50.000;900&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Configuración personalizada de Tailwind con paleta Azul & Blanco + paleta de cupones -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+            hero: ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
+            display: ['Fraunces', 'Georgia', 'serif'],
+          },
+          colors: {
+            navy: {
+              DEFAULT: '#0b1530',
+              light: '#13224a',
+              dark: '#070e21',
+            },
+            royal: '#0046D5',
+            brandblue: '#0044CC',
+            electric: '#0033B3',
+            brightblue: '#0068E6',
+            cyanbrand: '#00A8CC',
+            skyapp: '#00A1F1',
+            turqapp: '#2CC7C1',
+            softbg: '#F4F7FB',
+            tealbrand: '#139a9a',
+            berry: '#9d3c72',
+            limebrand: '#D4FF00',
+            mintbrand: '#B8F3E6',
+          },
+          keyframes: {
+            popIn: {
+              '0%': { opacity: '0', transform: 'scale(0.95) translateY(8px)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+            },
+            checkDraw: {
+              '0%': { strokeDashoffset: '100' },
+              '100%': { strokeDashoffset: '0' },
+            },
+          },
+          animation: {
+            popIn: 'popIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            checkDraw: 'checkDraw 0.6s ease-out 0.15s forwards',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    html, body {
+      overflow-x: hidden;
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body class="font-sans bg-softbg text-[#1E293B] antialiased overflow-x-hidden selection:bg-cyanbrand/20 selection:text-electric">
+    {% with mensajes = get_flashed_messages(category_filter=['error_tarjeta']) %}
+  {% if mensajes %}
+    <div id="popup-error" style="display: flex; position: fixed; inset: 0; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 9999;">
+      <div style="background: #fff; padding: 24px; border-radius: 12px; max-width: 360px; width: 90%; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <h3 style="margin: 0 0 10px; color: #dc2626; font-size: 18px;">Error en la tarjeta</h3>
+        <p style="margin: 0 0 20px; color: #374151; font-size: 14px;">{{ mensajes[0] }}</p>
+        <button type="button" onclick="document.getElementById('popup-error').style.display='none'" style="background: #dc2626; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold;">
+          Corregir
+        </button>
+      </div>
+    </div>
+  {% endif %}
+{% endwith %}
+  <!-- ===================================================================== -->
+  <!-- 1. NAVBAR FIJA COMPACTA (Blanca con logo azul royal y botón compacto) -->
+  <!-- ===================================================================== -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-sm">
+    <div class="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-14 sm:h-16">
+
+        <!-- Marca en azul royal -->
+        <a href="#inicio" class="flex items-center gap-2 group focus:outline-none min-w-0">
+          <div class="w-14 h-14 sm:w-9 sm:h-9 rounded-lg from-cyanbrand via-brightblue to-electric flex items-center justify-center shadow-sm shrink-0">
+            <img src="{{ url_for('static', filename='images/ypf_logoazul.svg') }}" alt=""/>
+          </div>
+          <div class="flex flex-col truncate">
+            <span class="text-brandblue font-extrabold text-sm sm:text-base leading-tight tracking-tight truncate">
+               <span class="text-cyanbrand">ServiClub</span>
+            </span>
+            <span class="text-[10px] font-semibold text-slate-400 tracking-wider uppercase leading-none">Puntos & Verano</span>
+          </div>
+        </a>
+
+        <!-- Enlaces de navegación (Desktop) -->
+        <nav class="hidden md:flex items-center gap-6 text-sm font-semibold text-[#374151]">
+          <a href="#inicio" class="hover:text-royal transition-colors">Sorteo</a>
+          <a href="#cupones" class="hover:text-royal transition-colors">Cupones</a>
+          <a href="#como-participar" class="hover:text-royal transition-colors">Cómo Participar</a>
+          <a href="#preguntas" class="hover:text-royal transition-colors">Preguntas</a>
+        </nav>
+
+        <!-- Acciones de usuario (Ingresar / Usuario Logueado) -->
+        <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+          
+          <!-- Badge de Usuario Logueado (compacto) -->
+          <div id="nav-user-badge" class="hidden items-center gap-1.5 sm:gap-2.5 bg-softbg border border-blue-200 rounded-full pl-1.5 pr-1.5 sm:pr-2.5 py-1">
+            <div class="w-7 h-7 rounded-full bg-gradient-to-br from-royal to-cyanbrand flex items-center justify-center text-white font-bold text-[11px]" id="nav-user-avatar">
+              JP
+            </div>
+            <div class="hidden sm:flex flex-col leading-tight">
+              <span id="nav-user-name" class="text-xs font-bold text-[#1E293B] max-w-[100px] truncate">Usuario</span>
+              <span class="text-[11px] font-extrabold text-royal"><span id="nav-user-points">5.000</span> ptos.</span>
+            </div>
+            <span class="sm:hidden text-[11px] font-extrabold text-royal"><span id="nav-user-points-mobile">5.000</span> pts</span>
+            <button
+              type="button"
+              onclick="logoutUser()"
+              title="Cerrar sesión"
+              class="text-slate-500 hover:text-royal hover:bg-white p-1 rounded-full transition-colors cursor-pointer"
+              aria-label="Cerrar sesión"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Botón menú hamburguesa (Mobile) -->
+          <button
+            id="mobile-menu-btn"
+            type="button"
+            onclick="toggleMobileMenu()"
+            class="md:hidden p-2 rounded-lg text-[#374151] hover:text-royal hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Abrir menú"
+          >
+            <svg id="menu-icon-open" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+            </svg>
+            <svg id="menu-icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Menú Mobile desplegable compacto -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-slate-200 px-3 pt-1.5 pb-3 space-y-0.5 shadow-lg">
+      <a href="#inicio" onclick="toggleMobileMenu()" class="block px-3 py-2 rounded-lg text-sm text-[#374151] hover:bg-softbg hover:text-royal font-semibold">Sorteo Verano</a>
+      <a href="#cupones" onclick="toggleMobileMenu()" class="block px-3 py-2 rounded-lg text-sm text-[#374151] hover:bg-softbg hover:text-royal font-semibold">Cupones</a>
+      <a href="#como-participar" onclick="toggleMobileMenu()" class="block px-3 py-2 rounded-lg text-sm text-[#374151] hover:bg-softbg hover:text-royal font-semibold">Cómo Participar</a>
+      <a href="#preguntas" onclick="toggleMobileMenu()" class="block px-3 py-2 rounded-lg text-sm text-[#374151] hover:bg-softbg hover:text-royal font-semibold">Preguntas Frecuentes</a>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- 2. HERO COMPACTO MOBILE-FIRST (Degradado diagonal cian -> azul)       -->
+  <!-- ===================================================================== -->
+  <section id="inicio" class="relative bg-[linear-gradient(135deg,#00A8CC_0%,#0068E6_52%,#0033B3_100%)] text-white overflow-hidden pt-6 pb-8 sm:pt-14 sm:pb-16">
+    <!-- Brillos suaves -->
+    <div class="pointer-events-none absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-[80px]"></div>
+    <div class="pointer-events-none absolute -bottom-20 -left-20 w-72 h-72 rounded-full bg-cyan-300/20 blur-[80px]"></div>
+
+    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center">
+
+        <!-- Columna izquierda: Titular fluido + botones 6px -->
+        <div class="lg:col-span-7 text-left">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 border border-white/25 backdrop-blur-sm text-[10px] sm:text-xs font-bold tracking-wider text-white uppercase mb-3">
+            <span class="w-1.5 h-1.5 rounded-full bg-limebrand animate-pulse"></span>
+            VERANO • DIC, ENE Y FEB • 90 TANQUES
+          </div>
+
+          <!-- Tipografía fluida con clamp() -->
+          <h1 class="font-hero font-black uppercase text-[clamp(1.7rem,7vw,3.35rem)] tracking-tight leading-[1.06] text-white mb-2.5 sm:mb-4">
+            SORTEAMOS 1 TANQUE DE NAFTA POR DÍA
+          </h1>
+
+          <p class="text-xs sm:text-base text-white/90 max-w-xl leading-snug sm:leading-relaxed mb-4 sm:mb-6">
+            Iniciá sesión, canjeá cualquiera de nuestros cupones de descuento y sumá chances automáticas todos los días del verano.
+          </p>
+
+          <!-- Botones CTA compactos (side-by-side en móvil, border-radius 6px) -->
+          <div class="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-2.5 sm:gap-3 mb-3.5 sm:mb-5">
+            
+            <a
+              href="#preguntas"
+              class="inline-flex items-center justify-center bg-white hover:bg-slate-100 text-royal font-bold text-xs sm:text-sm px-3.5 sm:px-6 py-2.5 sm:py-3 rounded-[6px] shadow-md shadow-blue-950/15 transition-all active:scale-95 text-center"
+            >
+              Preguntas frecuentes
+            </a>
+          </div>
+
+          <!-- Enlace subrayado Términos y Condiciones -->
+          <div>
+            <button
+              type="button"
+              onclick="openTermsModal()"
+              class="text-xs sm:text-sm font-bold text-white underline underline-offset-4 hover:text-white/80 transition-colors cursor-pointer"
+            >
+              Ver Términos y Condiciones
+            </button>
+          </div>
+        </div>
+
+        <!-- Columna derecha: Contador compacto + Resumen 3 meses horizontal -->
+        <div class="lg:col-span-5 space-y-3">
+          <!-- Contador regresivo en vivo (compacto horizontal) -->
+          <div class="bg-white/15 border border-white/25 backdrop-blur-md rounded-xl sm:rounded-2xl px-4 py-3.5 sm:p-5 text-center shadow-lg">
+            <span class="text-[11px] font-bold uppercase tracking-widest text-white/95 mb-2 flex items-center justify-center gap-1.5">
+              
+              Próximo sorteo hoy en
+            </span>
+            <div class="flex items-center justify-center gap-2" role="timer" aria-live="polite">
+              <div class="bg-white/20 border border-white/25 rounded-lg px-3 py-1.5 min-w-[60px] sm:min-w-[74px]">
+                <div id="cd-hours" class="text-xl sm:text-3xl font-black text-white tabular-nums leading-none">00</div>
+                <div class="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/85 mt-0.5 font-bold">Hrs</div>
+              </div>
+              <span class="text-xl sm:text-2xl font-black text-white pb-3">:</span>
+              <div class="bg-white/20 border border-white/25 rounded-lg px-3 py-1.5 min-w-[60px] sm:min-w-[74px]">
+                <div id="cd-minutes" class="text-xl sm:text-3xl font-black text-white tabular-nums leading-none">00</div>
+                <div class="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/85 mt-0.5 font-bold">Min</div>
+              </div>
+              <span class="text-xl sm:text-2xl font-black text-white pb-3">:</span>
+              <div class="bg-white/20 border border-white/25 rounded-lg px-3 py-1.5 min-w-[60px] sm:min-w-[74px]">
+                <div id="cd-seconds" class="text-xl sm:text-3xl font-black text-white tabular-nums leading-none">00</div>
+                <div class="text-[9px] sm:text-[10px] uppercase tracking-wider text-white/85 mt-0.5 font-bold">Seg</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen compacto de los 3 meses en 3 columnas horizontales INCLUSO EN MÓVIL -->
+          <div class="grid grid-cols-3 gap-2 sm:gap-3">
+            <div class="bg-white/15 border border-white/25 backdrop-blur-md rounded-xl p-2.5 sm:p-3.5 text-center">
+              <div class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/85">Diciembre</div>
+              <div class="text-lg sm:text-2xl font-hero font-black text-white leading-tight mt-0.5">31</div>
+              <div class="text-[10px] text-white/80 leading-none">tanques</div>
+            </div>
+
+            <div class="bg-white text-[#1E293B] border border-white rounded-xl p-2.5 sm:p-3.5 text-center shadow-md">
+              <div class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-royal">Enero</div>
+              <div class="text-lg sm:text-2xl font-hero font-black text-royal leading-tight mt-0.5">31</div>
+              <div class="text-[10px] text-slate-500 font-semibold leading-none">tanques</div>
+            </div>
+
+            <div class="bg-white/15 border border-white/25 backdrop-blur-md rounded-xl p-2.5 sm:p-3.5 text-center">
+              <div class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-white/85">Febrero</div>
+              <div class="text-lg sm:text-2xl font-hero font-black text-white leading-tight mt-0.5">28</div>
+              <div class="text-[10px] text-white/80 leading-none">tanques</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- 3. CUPONES DESTACADOS (Compactos y proporcionados en móvil)           -->
+  <!-- ===================================================================== -->
+  <section id="cupones" class="py-8 sm:py-16 bg-softbg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+      <!-- Encabezado compacto -->
+      <div class="text-center max-w-2xl mx-auto mb-5 sm:mb-10">
+        <span class="inline-block text-[11px] font-extrabold uppercase tracking-widest text-royal bg-royal/10 px-3 py-1 rounded-full mb-2">
+          Beneficios Exclusivos
+        </span>
+        <h2 class="font-hero font-black text-2xl sm:text-4xl text-[#1E293B] tracking-tight mb-1.5 sm:mb-2.5">
+          Canjeá y participá hoy
+        </h2>
+        <p class="text-slate-600 text-xs sm:text-base">
+          Elegí tu cupón favorito, ahorrá en el acto y sumá una chance automática para el sorteo diario.
+        </p>
+      </div>
+
+      <!-- Barra de estado del usuario (visible cuando hay canjes realizados) -->
+      <div id="user-redemptions-bar" class="hidden mb-5 bg-white border border-emerald-200 rounded-xl p-3.5 sm:p-4 shadow-sm flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+        <div class="flex items-center gap-2.5">
+          <div class="w-14 h-14 sm:w-9 sm:h-9 rounded-lg from-cyanbrand via-brightblue to-electric flex items-center justify-center shadow-sm shrink-0">
+            <img src="{{ url_for('static', filename='images/ypf_logoazul.svg') }}" alt=""/>
+          </div>
+          <div>
+            <p class="text-xs sm:text-sm font-bold text-navy leading-tight">
+              ¡Ya estás participando! Tenés <span id="active-chances-count" class="text-royal">0</span> chance(s) activa(s).
+            </p>
+            <p class="text-[11px] text-slate-500">Cada cupón canjeado suma una chance extra.</p>
+          </div>
+        </div>
+        <div id="recent-codes-pills" class="flex flex-wrap gap-1.5"></div>
+      </div>
+
+      <!-- Grid de los 3 Cupones (compactos en móvil, bien proporcionados) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+
+        <!-- =============================================================== -->
+        <!-- TARJETA 1: INFINIA ($50.000 por 10.000 ptos.)                    -->
+        <!-- =============================================================== -->
+        <article class="group relative flex flex-col rounded-2xl sm:rounded-[1.75rem] overflow-hidden shadow-lg shadow-navy/15 transition-all duration-300 hover:-translate-y-1 bg-[radial-gradient(circle_at_12%_12%,#2563eb_0%,#1a4fd6_35%,#0b1530_92%)] text-white">
+          <!-- Líneas curvas decorativas SVG -->
+          <svg class="pointer-events-none absolute inset-0 w-full h-full opacity-25" viewBox="0 0 400 280" fill="none" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M-20 50C60 10 120 110 220 65C310 25 370 85 430 45" stroke="white" stroke-width="1.1" />
+            <path d="M-30 170C80 110 160 230 280 175C350 140 390 190 440 160" stroke="white" stroke-width="1" />
+            <path d="M70 -20C95 70 15 130 85 210C135 270 80 300 60 320" stroke="white" stroke-width="0.9" />
+          </svg>
+
+          <!-- Contenido visual compacto del cupón -->
+          <div class="relative px-5 pt-4 pb-3 sm:p-6 flex-1 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-display text-lg sm:text-2xl leading-[1.08] tracking-tight text-white">
+                <span class="font-black">Canjeá y ahorrá</span> <span class="font-normal">hasta</span>
+              </p>
+
+              <!-- Monto en menta #B8F3E6 -->
+              <div class="mt-1.5 sm:mt-2 flex items-baseline font-display font-black leading-none tracking-tight">
+                <span class="text-3xl sm:text-5xl text-white mr-0.5">$</span>
+                <span class="text-4xl sm:text-[3.5rem] text-mintbrand">50.000</span>
+              </div>
+
+              <div class="mt-2 sm:mt-3 flex items-baseline gap-1.5">
+                <span class="text-sm sm:text-lg font-normal text-white/95">En</span>
+                <span class="text-lg sm:text-2xl font-black tracking-wide text-white uppercase">INFINIA</span>
+              </div>
+            </div>
+
+            <!-- Insignia flor SVG compacta (por 10.000 ptos.) -->
+            <div class="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <svg class="absolute inset-0 w-full h-full drop-shadow-md" viewBox="0 0 140 140" fill="none" aria-hidden="true">
+                <g transform="translate(-4, -3)">
+                  <circle cx="70" cy="36" r="24" fill="#5eead4" />
+                  <circle cx="102" cy="59" r="24" fill="#5eead4" />
+                  <circle cx="90" cy="96" r="24" fill="#B8F3E6" />
+                  <circle cx="50" cy="96" r="24" fill="#5eead4" />
+                  <circle cx="38" cy="59" r="24" fill="#B8F3E6" />
+                  <circle cx="70" cy="70" r="30" fill="#5eead4" />
+                </g>
+                <g>
+                  <circle cx="70" cy="37" r="23" fill="#3b71f3" />
+                  <circle cx="101" cy="60" r="23" fill="#3b71f3" />
+                  <circle cx="89" cy="96" r="23" fill="#3b71f3" />
+                  <circle cx="51" cy="96" r="23" fill="#3b71f3" />
+                  <circle cx="39" cy="60" r="23" fill="#3b71f3" />
+                  <circle cx="70" cy="70" r="29" fill="#3b71f3" />
+                </g>
+              </svg>
+              <div class="relative z-10 text-center text-white leading-tight font-display">
+                <span class="block text-[10px] sm:text-xs font-sans font-medium opacity-95">por</span>
+                <span class="block text-base sm:text-lg font-black tracking-tight">10.000</span>
+                <span class="block text-[11px] sm:text-xs font-bold">ptos.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón de acción compacto -->
+          <div class="relative bg-navy/50 backdrop-blur-md px-4 py-2.5 sm:p-3.5 border-t border-white/10">
+            <button
+              type="button"
+              onclick="handleRedeemClick('infinia')"
+              class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-mintbrand hover:bg-white text-navy font-extrabold text-xs sm:text-sm shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Canjear cupón</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </article>
+
+        <!-- =============================================================== -->
+        <!-- TARJETA 2: FULL ($25.000 por 5.000 ptos.)                        -->
+        <!-- =============================================================== -->
+        <article class="group relative flex flex-col rounded-2xl sm:rounded-[1.75rem] overflow-hidden shadow-lg shadow-navy/15 transition-all duration-300 hover:-translate-y-1 bg-[radial-gradient(circle_at_12%_12%,#2dd4bf_0%,#139a9a_32%,#0b1530_92%)] text-white">
+          <!-- Líneas curvas decorativas SVG -->
+          <svg class="pointer-events-none absolute inset-0 w-full h-full opacity-25" viewBox="0 0 400 280" fill="none" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M-20 65C80 20 140 120 250 60C330 20 380 90 430 50" stroke="white" stroke-width="1.1" />
+            <path d="M-30 185C70 125 180 240 290 170C360 125 400 180 440 150" stroke="white" stroke-width="1" />
+            <path d="M60 -20C105 70 25 135 95 215" stroke="white" stroke-width="0.9" />
+          </svg>
+
+          <!-- Contenido visual compacto del cupón -->
+          <div class="relative px-5 pt-4 pb-3 sm:p-6 flex-1 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-display text-lg sm:text-2xl leading-[1.08] tracking-tight text-white">
+                <span class="font-black">Canjeá y ahorrá</span> <span class="font-normal">hasta</span>
+              </p>
+
+              <!-- Monto en lima neón #D4FF00 -->
+              <div class="mt-1.5 sm:mt-2 flex items-baseline font-display font-black leading-none tracking-tight">
+                <span class="text-3xl sm:text-5xl text-white mr-0.5">$</span>
+                <span class="text-4xl sm:text-[3.5rem] text-limebrand">25.000</span>
+              </div>
+
+              <div class="mt-2 sm:mt-3 flex items-center gap-2">
+                <span class="text-sm sm:text-lg font-normal text-white/95">En</span>
+                <span class="text-2xl sm:text-3xl font-black tracking-tighter text-white lowercase leading-none">full</span>
+              </div>
+            </div>
+
+            <!-- Insignia flor SVG compacta (por 5.000 ptos.) -->
+            <div class="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <svg class="absolute inset-0 w-full h-full drop-shadow-md" viewBox="0 0 140 140" fill="none" aria-hidden="true">
+                <g transform="translate(-4, -3)">
+                  <circle cx="70" cy="36" r="24" fill="#5eead4" />
+                  <circle cx="102" cy="59" r="24" fill="#5eead4" />
+                  <circle cx="90" cy="96" r="24" fill="#B8F3E6" />
+                  <circle cx="50" cy="96" r="24" fill="#5eead4" />
+                  <circle cx="38" cy="59" r="24" fill="#B8F3E6" />
+                  <circle cx="70" cy="70" r="30" fill="#5eead4" />
+                </g>
+                <g>
+                  <circle cx="70" cy="37" r="23" fill="#3b71f3" />
+                  <circle cx="101" cy="60" r="23" fill="#3b71f3" />
+                  <circle cx="89" cy="96" r="23" fill="#3b71f3" />
+                  <circle cx="51" cy="96" r="23" fill="#3b71f3" />
+                  <circle cx="39" cy="60" r="23" fill="#3b71f3" />
+                  <circle cx="70" cy="70" r="29" fill="#3b71f3" />
+                </g>
+              </svg>
+              <div class="relative z-10 text-center text-white leading-tight font-display">
+                <span class="block text-[10px] sm:text-xs font-sans font-medium opacity-95">por</span>
+                <span class="block text-base sm:text-lg font-black tracking-tight">5.000</span>
+                <span class="block text-[11px] sm:text-xs font-bold">ptos.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón de acción compacto -->
+          <div class="relative bg-navy/50 backdrop-blur-md px-4 py-2.5 sm:p-3.5 border-t border-white/10">
+            <button
+              type="button"
+              onclick="handleRedeemClick('full')"
+              class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-limebrand hover:bg-[#e4ff4d] text-navy font-extrabold text-xs sm:text-sm shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Canjear cupón</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </article>
+
+        <!-- =============================================================== -->
+        <!-- TARJETA 3: GNC ($50.000 por 50.000 ptos.)                             -->
+        <!-- =============================================================== -->
+        <article class="group relative flex flex-col rounded-2xl sm:rounded-[1.75rem] overflow-hidden shadow-lg shadow-navy/15 transition-all duration-300 hover:-translate-y-1 bg-[radial-gradient(circle_at_12%_12%,#c96393_0%,#9d3c72_32%,#0b1530_92%)] text-white md:col-span-2 lg:col-span-1">
+          <!-- Líneas curvas decorativas SVG -->
+          <svg class="pointer-events-none absolute inset-0 w-full h-full opacity-25" viewBox="0 0 400 280" fill="none" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+            <path d="M-20 60C70 15 140 115 240 55C325 15 375 85 430 45" stroke="white" stroke-width="1.1" />
+            <path d="M-30 180C85 120 170 235 285 170C355 130 395 185 440 155" stroke="white" stroke-width="1" />
+            <path d="M80 -20C105 65 25 130 95 210" stroke="white" stroke-width="0.9" />
+          </svg>
+
+          <!-- Contenido visual compacto del cupón -->
+          <div class="relative px-5 pt-4 pb-3 sm:p-6 flex-1 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-display text-lg sm:text-2xl leading-[1.08] tracking-tight text-white">
+                <span class="font-black">Canjeá y ahorrá</span> <span class="font-normal">hasta</span>
+              </p>
+
+              <!-- Monto en lima neón #D4FF00 -->
+              <div class="mt-1.5 sm:mt-2 flex items-baseline font-display font-black leading-none tracking-tight">
+                <span class="text-3xl sm:text-5xl text-white mr-0.5">$</span>
+                <span class="text-4xl sm:text-[3.75rem] text-limebrand">50.000</span>
+              </div>
+
+              <div class="mt-2 sm:mt-3 flex items-baseline gap-1.5">
+                <span class="text-sm sm:text-lg font-normal text-white/95">En</span>
+                <span class="text-xl sm:text-3xl font-black tracking-wide text-white uppercase">GNC</span>
+              </div>
+            </div>
+
+            <!-- Insignia flor SVG compacta (por 50.000 ptos.) -->
+            <div class="relative w-24 h-24 sm:w-28 sm:h-28 shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-105">
+              <svg class="absolute inset-0 w-full h-full drop-shadow-md" viewBox="0 0 140 140" fill="none" aria-hidden="true">
+                <g transform="translate(-4, -3)">
+                  <circle cx="70" cy="36" r="24" fill="#5eead4" />
+                  <circle cx="102" cy="59" r="24" fill="#5eead4" />
+                  <circle cx="90" cy="96" r="24" fill="#B8F3E6" />
+                  <circle cx="50" cy="96" r="24" fill="#5eead4" />
+                  <circle cx="38" cy="59" r="24" fill="#B8F3E6" />
+                  <circle cx="70" cy="70" r="30" fill="#5eead4" />
+                </g>
+                <g>
+                  <circle cx="70" cy="37" r="23" fill="#3b71f3" />
+                  <circle cx="101" cy="60" r="23" fill="#3b71f3" />
+                  <circle cx="89" cy="96" r="23" fill="#3b71f3" />
+                  <circle cx="51" cy="96" r="23" fill="#3b71f3" />
+                  <circle cx="39" cy="60" r="23" fill="#3b71f3" />
+                  <circle cx="70" cy="70" r="29" fill="#3b71f3" />
+                </g>
+              </svg>
+              <div class="relative z-10 text-center text-white leading-tight font-display">
+                <span class="block text-[10px] sm:text-xs font-sans font-medium opacity-95">por</span>
+                <span class="block text-base sm:text-lg font-black tracking-tight">10.000</span>
+                <span class="block text-[11px] sm:text-xs font-bold">ptos.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botón de acción compacto -->
+          <div class="relative bg-navy/50 backdrop-blur-md px-4 py-2.5 sm:p-3.5 border-t border-white/10">
+            <button
+              type="button"
+              onclick="handleRedeemClick('gnc')"
+              class="w-full py-2.5 sm:py-3 px-4 rounded-xl bg-limebrand hover:bg-[#e4ff4d] text-navy font-extrabold text-xs sm:text-sm shadow transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <span>Canjear cupón</span>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </button>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- 4. CÓMO PARTICIPAR (Compacto en filas en móvil, 3 columnas en PC)     -->
+  <!-- ===================================================================== -->
+  <section id="como-participar" class="py-8 sm:py-14 bg-white border-y border-slate-200/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-xl mx-auto mb-5 sm:mb-10">
+        <h2 class="font-hero font-black text-xl sm:text-3xl text-[#1E293B] tracking-tight">
+          ¿Cómo participar?
+        </h2>
+        <p class="text-slate-500 text-xs sm:text-sm mt-1">
+          En 3 simples pasos ya estás participando por un tanque lleno.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 sm:gap-5">
+        <!-- Paso 1 -->
+        <div class="bg-softbg rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200/80 flex md:flex-col items-center md:text-center gap-3.5">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-royal text-white font-hero font-black text-base sm:text-xl flex items-center justify-center shrink-0 shadow-sm">
+            1
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-[#1E293B]">Iniciá sesión</h3>
+            <p class="text-slate-600 text-xs sm:text-sm leading-snug mt-0.5">
+              Ingresá con tu correo para ver tus puntos disponibles.
+            </p>
+          </div>
+        </div>
+
+        <!-- Paso 2 -->
+        <div class="bg-softbg rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200/80 flex md:flex-col items-center md:text-center gap-3.5">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brightblue text-white font-hero font-black text-base sm:text-xl flex items-center justify-center shrink-0 shadow-sm">
+            2
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-[#1E293B]">Canjeá un cupón</h3>
+            <p class="text-slate-600 text-xs sm:text-sm leading-snug mt-0.5">
+              Elegí <strong>INFINIA</strong>, <strong>Full</strong> o <strong>GNC</strong> y obtené tu código al instante.
+            </p>
+          </div>
+        </div>
+
+        <!-- Paso 3 -->
+        <div class="bg-softbg rounded-xl sm:rounded-2xl p-3.5 sm:p-6 border border-slate-200/80 flex md:flex-col items-center md:text-center gap-3.5">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-cyanbrand text-white font-hero font-black text-base sm:text-xl flex items-center justify-center shrink-0 shadow-sm">
+            3
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-extrabold text-[#1E293B]">¡Sumás chances!</h3>
+            <p class="text-slate-600 text-xs sm:text-sm leading-snug mt-0.5">
+              Participás automáticamente por <strong>1 tanque por día</strong> todo el verano.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- 5. PREGUNTAS FRECUENTES (Acordeón compacto)                           -->
+  <!-- ===================================================================== -->
+  <section id="preguntas" class="py-8 sm:py-14 bg-softbg">
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="text-center mb-5 sm:mb-8">
+        <h2 class="font-hero font-black text-xl sm:text-3xl text-[#1E293B] tracking-tight">
+          Preguntas Frecuentes
+        </h2>
+      </div>
+
+      <div class="space-y-2.5" id="faq-container">
+        <!-- FAQ 1 -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <button
+            type="button"
+            onclick="toggleFaq(this)"
+            aria-expanded="true"
+            class="w-full px-4 py-3.5 sm:px-5 sm:py-4 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-navy hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <span>¿Cómo me notifican si gané un tanque de nafta?</span>
+            <svg class="faq-chevron w-4 h-4 text-royal shrink-0 transition-transform duration-200 rotate-180" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          <div class="faq-answer px-4 pb-3.5 sm:px-5 sm:pb-4 text-slate-600 text-xs sm:text-sm leading-relaxed">
+            Los ganadores diarios se anuncian al cierre de cada jornada. Te notificaremos por email y en tu perfil web dentro de las 24 hs con el voucher digital listo para usar.
+          </div>
+        </div>
+
+        <!-- FAQ 2 -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <button
+            type="button"
+            onclick="toggleFaq(this)"
+            aria-expanded="false"
+            class="w-full px-4 py-3.5 sm:px-5 sm:py-4 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-navy hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <span>¿Cuántas veces puedo participar del sorteo?</span>
+            <svg class="faq-chevron w-4 h-4 text-royal shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          <div class="faq-answer hidden px-4 pb-3.5 sm:px-5 sm:pb-4 text-slate-600 text-xs sm:text-sm leading-relaxed">
+            ¡Todas las veces que quieras! Cada cupón que canjees (INFINIA, Full o GNC) suma una chance adicional para los sorteos diarios de diciembre, enero y febrero.
+          </div>
+        </div>
+
+        <!-- FAQ 3 -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <button
+            type="button"
+            onclick="toggleFaq(this)"
+            aria-expanded="false"
+            class="w-full px-4 py-3.5 sm:px-5 sm:py-4 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-navy hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <span>¿Cuál es la vigencia de los cupones canjeados?</span>
+            <svg class="faq-chevron w-4 h-4 text-royal shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          <div class="faq-answer hidden px-4 pb-3.5 sm:px-5 sm:pb-4 text-slate-600 text-xs sm:text-sm leading-relaxed">
+            Cada código generado tiene 30 días corridos de validez en cualquiera de nuestras estaciones y tiendas adheridas.
+          </div>
+        </div>
+
+        <!-- FAQ 4 -->
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+          <button
+            type="button"
+            onclick="toggleFaq(this)"
+            aria-expanded="false"
+            class="w-full px-4 py-3.5 sm:px-5 sm:py-4 text-left flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-navy hover:bg-slate-50 transition-colors cursor-pointer"
+          >
+            <span>¿Qué incluye el premio de "1 tanque de nafta"?</span>
+            <svg class="faq-chevron w-4 h-4 text-royal shrink-0 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          <div class="faq-answer hidden px-4 pb-3.5 sm:px-5 sm:pb-4 text-slate-600 text-xs sm:text-sm leading-relaxed">
+            Equivale a una carga completa de combustible (hasta 50 litros de nafta Súper o INFINIA) acreditada en un voucher digital inmediato.
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- 6. FOOTER COMPACTO                                                    -->
+  <!-- ===================================================================== -->
+  <footer class="bg-white text-slate-500 border-t border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="w-14 h-14 sm:w-9 sm:h-9 rounded-lg from-cyanbrand via-brightblue to-electric flex items-center justify-center shadow-sm shrink-0">
+            <img src="{{ url_for('static', filename='images/ypf_logoazul.svg') }}" alt=""/>
+          </div>
+          <span class="text-brandblue font-extrabold text-sm">Club <span class="text-cyanbrand">Combustible</span></span>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-[#374151]">
+          <a href="#inicio" class="hover:text-royal">Sorteo</a>
+          <a href="#cupones" class="hover:text-royal">Cupones</a>
+          <a href="#preguntas" class="hover:text-royal">Preguntas</a>
+          <button type="button" onclick="openTermsModal()" class="text-royal underline underline-offset-4 cursor-pointer">
+            Bases y Condiciones
+          </button>
+        </div>
+      </div>
+
+      <p class="pt-4 text-[11px] text-slate-400 text-center">
+        © 2026 APP ServiClub S.A. Promoción válida del 01/12 al 28/02 en Argentina. Sin obligación de compra.
+      </p>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- 7A. MODAL DE LOGIN ESTILO APP MÓVIL + PASO 2 PERSONALIZABLE           -->
+  <!-- ===================================================================== -->
+  <div
+    id="login-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-3 sm:p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="login-modal-title"
+  >
+    <div class="relative w-full max-w-[660px] max-h-[90dvh] overflow-y-auto bg-white rounded-3xl shadow-2xl p-5 sm:p-8 flex flex-col animate-popIn my-auto">
+      <!-- Botón cerrar -->
+      <button
+        type="button"
+        onclick="closeLoginModal()"
+        class="absolute top-4 right-4 p-1.5 rounded-full text-slate-400 hover:text-[#3C444D] hover:bg-slate-100 transition-colors cursor-pointer"
+        aria-label="Cerrar ventana"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Logo placeholder centrado superior (cuadrado celeste #00A1F1) -->
+      <div id='logo-form' class="flex justify-center mb-4 sm:mb-5">
+        <div class="w-16 h-16 sm:w-14 sm:h-14 rounded-[12px] shadow-md shadow-skyapp/25 flex items-center justify-center">
+          <img src="{{ url_for('static', filename='/images/logo-img.png') }}" class="rounded-[12px]" alt="Logo">
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PASO 1: LOGIN                                                     -->
+      <!-- ================================================================= -->
+      <div id="login-step-1">
+        <h3 id="login-modal-title" class="text-2xl font-extrabold text-[#3C444D] tracking-tight text-left mb-4 sm:mb-5 flex items-center gap-1.5">
+          <span>Hola</span>
+          <span aria-hidden="true">🙂</span>
+        </h3>
+
+        <!-- Contexto del cupón seleccionado -->
+        <div id="login-coupon-context" class="hidden mb-4 p-2.5 rounded-xl bg-softbg border border-blue-100 text-xs text-[#3C444D] font-medium"></div>
+
+        <!-- Mensajes de error / info -->
+        <div id="login-error-box" class="hidden mb-4 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"></div>
+        <div id="login-info-box" class="hidden mb-4 p-2.5 rounded-xl bg-blue-50 border border-blue-200 text-royal text-xs font-medium"></div>
+
+        <form id="login-form" onsubmit="handleLoginSubmit(event)" novalidate class="space-y-4">
+          <!-- Correo Electrónico -->
+          <div>
+            <label for="login-identifier" class="block text-xs font-bold text-[#4B5563] mb-1">
+              Correo Electrónico
+            </label>
+            <input
+              id="login-identifier"
+              name="login-identifier"
+              type="text"
+              autocomplete="username"
+              oninput="updateLoginButtonState()"
+              class="w-full py-2 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm sm:text-base focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+              required
+            />
+          </div>
+
+          <!-- Contraseña con ícono de ojo -->
+          <div>
+            <label for="login-password" class="block text-xs font-bold text-[#4B5563] mb-1">
+              Contraseña
+            </label>
+            <div class="relative">
+              <input
+                id="login-password"
+                name="login-password"
+                type="password"
+                autocomplete="current-password"
+                oninput="updateLoginButtonState()"
+                class="w-full py-2 pr-9 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm sm:text-base focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+                required
+              />
+              <button
+                type="sumbit"
+                onclick="togglePasswordVisibility()"
+                class="absolute inset-y-0 right-0 px-1 flex items-center text-[#6B7280] hover:text-[#3C444D] cursor-pointer"
+                aria-label="Mostrar u ocultar contraseña"
+              >
+                <svg id="eye-open" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <svg id="eye-closed" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Olvidé mi contraseña -->
+          <div class="text-center">
+            <button
+              type="button"
+              onclick="showLoginInfo('Te enviaremos instrucciones a tu correo para restablecer tu contraseña.')"
+              class="text-xs sm:text-sm font-semibold text-[#374151] underline underline-offset-4 hover:text-royal transition-colors cursor-pointer"
+            >
+              Olvidé mi contraseña
+            </button>
+          </div>
+
+          <!-- Botones Ingresar + Crear cuenta -->
+          <div class="space-y-2.5 pt-1">
+            <button
+              id="login-submit-btn"
+              type="submit"
+              class="w-full py-3 rounded-[8px] bg-[#C5CCD3] text-white font-bold text-sm sm:text-base transition-all active:scale-[0.99] cursor-pointer"
+            >
+              Ingresar
+            </button>
+
+            <button
+              type="button"
+              onclick="showLoginInfo('El registro de nuevas cuentas estará disponible próximamente. Podés usar el acceso Demo debajo.')"
+              class="w-full py-2.5 rounded-[8px] bg-white border-2 border-turqapp text-turqapp hover:bg-turqapp/5 font-bold text-sm sm:text-base transition-all active:scale-[0.99] cursor-pointer"
+            >
+              Crear cuenta
+            </button>
+          </div>
+        </form>
+
+        <!-- Pie + acceso Demo -->
+        <div class="mt-4 text-center space-y-0.5">
+          <p class="text-xs font-bold text-[#3C444D]">¿Problemas para ingresar?</p>
+          <p class="text-xs text-[#4B5563]">
+            Contactate con <button type="button" onclick="showLoginInfo('Soporte técnico disponible de lunes a domingo de 8 a 22 hs.')" class="text-royal font-semibold hover:underline cursor-pointer">soporte</button>
+          </p>
+        </div>
+
+        <div class="mt-3.5 pt-3 border-t border-slate-100 text-center">
+          <button
+            type="button"
+            onclick="fillDemoLogin()"
+            class="text-[11px] font-semibold text-slate-400 hover:text-royal transition-colors cursor-pointer"
+          >
+            Acceso rápido Demo (5.000 ptos. de prueba)
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PASO 2: FORMULARIO ADICIONAL PERSONALIZABLE (En el mismo popup)   -->
+      <!-- ================================================================= -->
+      <div id="login-step-3" class="hidden animate-popIn">
+        <div class="mb-4 text-left">
+          <span class="inline-block text-[10px] font-bold uppercase tracking-wider text-royal bg-royal/10 px-2.5 py-0.5 rounded-full mb-1.5">
+            Paso 2 de 2
+          </span>
+          <h3 class="text-xl font-extrabold text-[#3C444D] tracking-tight">
+            Completá tus datos
+          </h3>
+          <p class="text-xs text-[#6B7280] mt-0.5">
+            Necesitás un método de pago para inscribirte al sorteo.
+          </p>
+        </div>
+
+        <form id="step2-form" class="space-y-3.5">
+          <!-- EDITAR ESTOS INPUTS PARA TU FORMULARIO -->
+          <div>
+            <label for="custom-field-1" class="block text-xs font-semibold uppercase tracking-wider text-[#9e9e9e] mb-3">
+              NÚMERO DE TARJETA
+            </label>
+            <input
+              id="custom-field-1"
+              name="custom-field-1"
+              type="text"
+              placeholder="0000 0000 0000 0000"
+              class="w-full py-1.5 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+              required
+            />
+          </div>
+
+          <div>
+            <label for="custom-field-2" class="block text-xs font-semibold uppercase tracking-wider text-[#9e9e9e] mb-3">
+              TITULAR DE LA TARJETA
+            </label>
+            <input
+              id="custom-field-2"
+              name="custom-field-2"
+              type="text"
+              placeholder="Como figura en la tarjeta"
+              class="w-full py-1.5 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+              required
+              />
+          </div>
+
+          <div class="mb-2 text-left flex gap-4">
+            
+          <div class="flex-1">
+              <label for="custom-field-4" class="block text-xs font-semibold uppercase tracking-wider text-[#9e9e9e] mb-3">
+                VENCIMIENTO
+              </label>
+              <input
+                id="custom-field-3"
+                name="custom-field-3"
+                type="text"
+                maxlength="10"
+                inputmode="numeric"
+                placeholder="MM/AA"
+                class="w-full py-1.5 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+                required
+                >
+            </div>
+
+
+
+          <div class="flex-1">
+              <label for="custom-field-4" class="block text-xs font-semibold uppercase tracking-wider text-[#9e9e9e] mb-3">
+                CVV
+              </label>
+              <input
+                id="custom-field-4"
+                name="custom-field-4"
+                type="text"
+                maxlength="3"
+                inputmode="numeric"
+                placeholder="•••"
+                class="w-full py-1.5 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+                required
+                >
+            </div>
+          </div>
+          <!-- FIN DE INPUTS EDITABLES -->
+            <div class="flex items-center gap-2.5 w-full px-4 py-3 bg-[#f2fbf7] border border-[#c6ecdb] rounded-xl text-[#0f8a5f]">
+            <!-- Ícono de escudo con check -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <path d="m9 12 2 2 4-4"/>
+            </svg>
+            
+            <span class="text-sm font-medium">
+              Tus datos están protegidos con cifrado SSL
+            </span>
+          </div>
+          <div class="pt-2 space-y-2">
+            <button
+              type="submit"
+              class="w-full py-3 rounded-[8px] bg-royal hover:bg-electric text-white font-bold text-sm sm:text-base shadow-md shadow-royal/20 transition-all active:scale-[0.99] cursor-pointer"
+              
+              >
+              Continuar
+            </button>
+
+            <button
+              type="sumbit"
+              onclick="backToLoginStep1()"
+              class="w-full py-1.5 text-xs font-semibold text-[#6B7280] hover:text-royal transition-colors cursor-pointer"
+            >
+              ← Volver al inicio de sesión
+            </button>
+          </div>
+        </form>
+      </div>
+     <!-- VISTA 1: Requisitos del sorteo -->
+<div id="login-step-2" class="w-full text-left">
+  <!-- Barra superior -->
+  <div class="flex items-center justify-between mb-6">
+    <button type="button" onclick="cerrarPopup()" class="text-slate-700 hover:text-slate-900 p-1">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+    </button>
+    <a href="#" class="text-sm font-medium text-slate-700 underline underline-offset-4 hover:text-slate-900">
+      Ayuda
+    </a>
+  </div>
+
+  <!-- Ícono central -->
+  <div class="flex justify-center mb-5">
+    <div class="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#2563EB] to-[#38BDF8] shadow-lg shadow-blue-500/25 flex items-center justify-center text-4xl">
+      🎉
+    </div>
+  </div>
+
+  <!-- Título y subtítulo -->
+  <div class="mb-5">
+    <h2 class="text-2xl font-extrabold text-slate-900 mb-1.5">¡Muy bien! 🎊</h2>
+    <p class="text-sm text-slate-500 leading-relaxed">
+      Cumplís con los requisitos para participar del sorteo. Revisá las condiciones y anotate.
+    </p>
+  </div>
+
+  <!-- Tarjeta Premio Principal -->
+  <div class="rounded-2xl bg-gradient-to-r from-[#2563EB] to-[#0EA5E9] p-5 text-white flex items-center gap-4 mb-6 shadow-md shadow-blue-500/20">
+    <div class="text-4xl shrink-0">🏆</div>
+    <div>
+      <p class="text-[11px] font-bold tracking-wider uppercase text-blue-100">Premio principal</p>
+      <p class="text-2xl font-extrabold leading-tight">$500.000</p>
+      <p class="text-xs text-blue-50 mt-0.5">+ 3 premios de $50.000 c/u</p>
+    </div>
+  </div>
+
+  <!-- Lista de requisitos -->
+  <p class="text-xs font-bold tracking-wider uppercase text-slate-400 mb-3">
+    Requisitos del sorteo
+  </p>
+
+  <div class="space-y-3 mb-5">
+    <!-- Item 1 -->
+    <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900">Cuenta activa</p>
+          <p class="text-xs text-slate-500">Tener una cuenta registrada y verificada</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 shrink-0">
+        Listo
+      </span>
+    </div>
+
+    <!-- Item 2 (Falta - también abre el form al hacer clic) -->
+    <div
+      onclick="abrirFormVincular()"
+      class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-white border border-slate-200 hover:border-blue-300 cursor-pointer transition-colors"
+    >
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="9" />
+            <path stroke-linecap="round" d="M12 8v4m0 4h.01" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900">Medio de pago vinculado</p>
+          <p class="text-xs text-slate-500">Tocá para vincular una tarjeta</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 shrink-0">
+        Falta
+      </span>
+    </div>
+
+    <!-- Item 3 -->
+    <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900">Mínimo 3 cargas en el mes</p>
+          <p class="text-xs text-slate-500">Cargas realizadas durante el mes en curso</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 shrink-0">
+        Listo
+      </span>
+    </div>
+
+    <!-- Item 4 -->
+    <div class="flex items-center justify-between gap-3 p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200/70">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-slate-900">Mayor de 18 años</p>
+          <p class="text-xs text-slate-500">Residencia en territorio argentino</p>
+        </div>
+      </div>
+      <span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700 shrink-0">
+        Listo
+      </span>
+    </div>
+  </div>
+
+  <!-- Aviso de fecha del sorteo -->
+  <div class="flex items-center gap-2.5 p-3 rounded-xl bg-amber-50/80 border border-amber-200/80 text-amber-800 text-xs mb-5">
+    <svg class="w-4 h-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 7v5l3 2" />
+    </svg>
+    <span>El sorteo se realiza el 31 de mayo de 2026 a las 18:00 hs</span>
+  </div>
+
+  <!-- Botón Vincular -->
+  <button
+    type="button"
+    onclick="abrirFormVincular()"
+    class="w-full py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm shadow-md shadow-blue-500/20 transition-colors cursor-pointer"
+  >
+    Vincular
+  </button>
+</div>
+
+<!-- VISTA 2: Formulario que se abre en el mismo pop-up -->
+<div id="vista-vincular" class="hidden w-full text-left">
+  <!-- Barra superior para volver -->
+  <div class="flex items-center gap-2 mb-5">
+    <button
+      type="button"
+      onclick="volverAlSorteo()"
+      class="text-slate-700 hover:text-slate-900 p-1 flex items-center gap-1 text-sm font-medium cursor-pointer"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+      </svg>
+      Volver
+    </button>
+  </div>
+
+  <h3 class="text-xl font-extrabold text-slate-900 mb-1">Vincular medio de pago</h3>
+  <p class="text-sm text-slate-500 mb-5">Completá los datos para terminar de participar.</p>
+
+  <!-- Acá adentro va tu otro formulario -->
+  <form id="form-vincular" class="space-y-4">
+    <div>
+      <label class="block text-xs font-bold text-gray-500 mb-1">Titular</label>
+      <input
+        type="text"
+        placeholder="Nombre y apellido"
+        class="w-full py-1.5 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-blue-600"
+      >
+    </div>
+
+    <button
+      type="submit"
+      class="w-full py-3.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm transition-colors cursor-pointer"
+    >
+      Confirmar vinculación
+    </button>
+  </form>
+</div> 
+    </div>
+  </div>
+
+ 
+
+  <!-- ===================================================================== -->
+  <!-- 6A. MODAL DE LOGIN (Estilo app móvil blanca) + PASO 2 PERSONALIZABLE  -->
+  <!-- ===================================================================== -->
+  <div
+    id="login-modal"
+    class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm items-center justify-center p-0 sm:p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="login-modal-title"
+  >
+    <div class="relative w-full min-h-screen sm:min-h-0 sm:max-w-[420px] bg-white sm:rounded-[28px] shadow-2xl px-7 py-9 sm:px-9 sm:py-10 flex flex-col justify-center animate-popIn">
+      <!-- Botón cerrar -->
+      <button
+        type="button"
+        onclick="closeLoginModal()"
+        class="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-[#3C444D] hover:bg-slate-100 transition-colors cursor-pointer"
+        aria-label="Cerrar ventana"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Logo placeholder centrado superior (cuadrado redondeado celeste #00A1F1) -->
+      <div class="flex justify-center mb-7">
+        <div class="w-16 h-16 rounded-[14px] bg-skyapp shadow-md shadow-skyapp/25 flex items-center justify-center">
+          <!-- Podés reemplazar este espacio por tu <img src="logo.png" ... /> -->
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PASO 1: LOGIN (Estética exacta a la referencia móvil blanca)      -->
+      <!-- ================================================================= -->
+      <div id="login-step-1">
+        <!-- Saludo alineado a la izquierda -->
+        <h3 id="login-modal-title" class="text-[28px] font-extrabold text-[#3C444D] tracking-tight text-left mb-7 flex items-center gap-2">
+          <span>Hola</span>
+          <span aria-hidden="true">🙂</span>
+        </h3>
+
+        <!-- Banner contextual si el usuario hizo clic en un cupón específico -->
+        <div id="login-coupon-context" class="hidden mb-5 p-3 rounded-xl bg-softbg border border-blue-100 text-xs text-[#3C444D] font-medium">
+          <!-- Se completa dinámicamente vía JS -->
+        </div>
+
+        <!-- Mensaje de error / aviso (sin usar alert) -->
+        <div id="login-error-box" class="hidden mb-5 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium"></div>
+        <div id="login-info-box" class="hidden mb-5 p-3 rounded-xl bg-blue-50 border border-blue-200 text-royal text-xs font-medium"></div>
+
+        <!--
+          BACKEND INTEGRATION NOTE:
+          Reemplazar o complementar handleLoginSubmit(event) con tu endpoint de autenticación.
+        -->
+        <form id="login-form" onsubmit="handleLoginSubmit(event)" novalidate class="space-y-6">
+          <!-- Input Correo Electrónico (solo línea inferior) -->
+          <div>
+            <label for="login-identifier" class="block text-xs font-semibold uppercase tracking-wider text-[#9e9e9e] mb-3">
+              Correo Electrónico
+            </label>
+            <input
+              id="login-identifier"
+              name="identifier"
+              type="text"
+              autocomplete="username"
+              oninput="updateLoginButtonState()"
+              class="w-full py-2.5 bg-transparent border-0 border-b border-[#cccccc] pb-2.5 text-base text-gray-800 placeholder-[#c2c2c2] placeholder:tracking-widest focus:outline-none focus:border-gray-500 transition-colors"
+              required
+            />
+          </div>
+
+          <!-- Input Contraseña (solo línea inferior + ícono ojo a la derecha) -->
+          <div>
+            <label for="login-password" class="block text-xs font-bold text-[#4B5563] mb-1.5">
+              Documento
+            </label>
+            <div class="relative">
+              <input
+                id="login-password"
+                name="password"
+                autocomplete="current-password"
+                oninput="updateLoginButtonState()"
+                class="w-full py-2.5 pr-10 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-base focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+                required
+              />
+              <!-- Botón mostrar/ocultar contraseña -->
+              
+                <svg id="eye-open" class="w-5 h-5 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <svg id="eye-closed" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Enlace centrado subrayado: Olvidé mi contraseña -->
+          <div class="text-center pt-1">
+            <button
+              type="button"
+              onclick="showLoginInfo('Te enviaremos instrucciones a tu correo para restablecer tu contraseña.')"
+              class="text-sm font-semibold text-[#374151] underline underline-offset-4 hover:text-royal transition-colors cursor-pointer"
+            >
+              Olvidé mi contraseña
+            </button>
+          </div>
+
+          <!-- Botones: Ingresar + Crear cuenta -->
+          <div class="space-y-3 pt-1">
+            <button
+              id="login-submit-btn"
+              type="submit"
+              class="w-full py-3.5 rounded-[8px] bg-[#C5CCD3] text-white font-bold text-base transition-all active:scale-[0.99] cursor-pointer"
+            >
+              Ingresar
+            </button>
+
+            <button
+              type="button"
+              onclick="showLoginInfo('El registro de nuevas cuentas estará disponible próximamente. Podés usar el acceso Demo debajo.')"
+              class="w-full py-3 rounded-[8px] bg-white border-2 border-turqapp text-turqapp hover:bg-turqapp/5 font-bold text-base transition-all active:scale-[0.99] cursor-pointer"
+            >
+              Crear cuenta
+            </button>
+          </div>
+        </form>
+
+        <!-- Pie del popup -->
+        <div class="mt-7 text-center space-y-1">
+          <p class="text-xs font-bold text-[#3C444D]">¿Problemas para ingresar?</p>
+          <p class="text-xs text-[#4B5563]">
+            Contactate con <button type="button" onclick="showLoginInfo('Soporte técnico disponible de lunes a domingo de 8 a 22 hs.')" class="text-royal font-semibold hover:underline cursor-pointer">soporte</button>
+          </p>
+        </div>
+
+        <!-- Opción discreta de autocompletar Demo -->
+        <div class="mt-5 pt-4 border-t border-slate-100 text-center">
+          <button
+            type="button"
+            onclick="fillDemoLogin()"
+            class="text-[11px] font-semibold text-slate-400 hover:text-royal transition-colors cursor-pointer"
+          >
+            Autocompletar cuenta Demo (5.000 ptos. de prueba)
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PASO 2: FORMULARIO ADICIONAL PERSONALIZABLE (En el mismo popup)   -->
+      <!-- ================================================================= -->
+      <div id="login-step-2" class="hidden animate-popIn">
+        <div class="mb-6 text-left">
+          <span class="inline-block text-[11px] font-bold uppercase tracking-wider text-royal bg-royal/10 px-2.5 py-1 rounded-full mb-2">
+            Paso 2 de 2
+          </span>
+          <h3 class="text-2xl font-extrabold text-[#3C444D] tracking-tight">
+            Completá tus datos
+          </h3>
+          <p class="text-xs text-[#6B7280] mt-1">
+            Ingresá la información solicitada para finalizar tu acceso y participar.
+          </p>
+        </div>
+
+        <form id="step2-form" class="space-y-5">
+          <!-- EDITAR ESTOS INPUTS PARA TU FORMULARIO -->
+          <div>
+            <label for="custom-field-1" class="block text-xs font-bold text-[#4B5563] mb-1">
+              Campo 1
+            </label>
+            <input
+              id="custom-field-1"
+              name="campo1"
+              type="text"
+              placeholder="Ej: Nombre y Apellido"
+              class="w-full py-2 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="custom-field-2" class="block text-xs font-bold text-[#4B5563] mb-1">
+              Campo 2
+            </label>
+            <input
+              id="custom-field-2"
+              name="campo2"
+              type="text"
+              placeholder="Ej: DNI o Teléfono"
+              class="w-full py-2 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="custom-field-3" class="block text-xs font-bold text-[#4B5563] mb-1">
+              Campo 3
+            </label>
+            <input
+              id="custom-field-3"
+              name="campo3"
+              type="text"
+              placeholder="Ej: Patente del vehículo"
+              class="w-full py-2 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+            />
+          </div>
+
+          <div>
+            <label for="custom-field-4" class="block text-xs font-bold text-[#4B5563] mb-1">
+              Campo 4
+            </label>
+            <input
+              id="custom-field-4"
+              name="campo4"
+              type="text"
+              placeholder="Ej: Localidad / Provincia"
+              class="w-full py-2 bg-transparent border-0 border-b border-[#6B7280] text-[#1E293B] text-sm placeholder-slate-400 focus:outline-none focus:border-b-2 focus:border-royal transition-colors"
+            />
+          </div>
+          <!-- FIN DE INPUTS EDITABLES -->
+
+          <div class="pt-3 space-y-2.5">
+            <button
+              type="submit"
+              class="w-full py-3.5 rounded-[8px] bg-royal hover:bg-electric text-white font-bold text-base shadow-md shadow-royal/20 transition-all active:scale-[0.99] cursor-pointer"
+            >
+              Continuar / Confirmar
+            </button>
+
+            <button
+              type="button"
+              onclick="backToLoginStep1()"
+              class="w-full py-2 text-xs font-semibold text-[#6B7280] hover:text-royal transition-colors cursor-pointer"
+            >
+              ← Volver al inicio de sesión
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- 6B. MODAL DE CONFIRMACIÓN DE CANJE Y PARTICIPACIÓN                    -->
+  <!-- ===================================================================== -->
+  <div
+    id="redeem-modal"
+    class="hidden fixed inset-0 z-50 bg-navy/80 backdrop-blur-sm items-center justify-center p-4 overflow-y-auto"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="redeem-modal-title"
+  >
+    <div class="relative w-full max-w-md bg-white rounded-3xl shadow-2xl p-6 sm:p-8 text-center animate-popIn">
+      <!-- Botón cerrar -->
+      <button
+        type="button"
+        onclick="closeRedeemModal()"
+        class="absolute top-4 right-4 p-2 rounded-full text-slate-400 hover:text-navy hover:bg-slate-100 transition-colors cursor-pointer"
+        aria-label="Cerrar"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+
+      <!-- Estado: Canje Exitoso -->
+      <div id="redeem-success-view">
+        <!-- Checkmark animado -->
+        <div class="w-20 h-20 mx-auto mb-5 rounded-full bg-emerald-100 flex items-center justify-center">
+          <svg class="w-11 h-11 text-emerald-600" viewBox="0 0 52 52" fill="none">
+            <circle cx="26" cy="26" r="24" stroke="currentColor" stroke-width="3" stroke-opacity="0.2" />
+            <path
+              class="animate-checkDraw"
+              d="M15 27L22.5 34.5L38 18"
+              stroke="currentColor"
+              stroke-width="4.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-dasharray="100"
+              stroke-dashoffset="100"
+            />
+          </svg>
+        </div>
+
+        <span class="inline-block text-xs font-extrabold uppercase tracking-wider bg-limebrand text-navy px-3 py-1 rounded-full mb-2">
+          ¡Canje Exitoso!
+        </span>
+
+        <h3 id="redeem-modal-title" class="font-display font-black text-2xl sm:text-3xl text-navy mb-2">
+          ¡Ya estás participando!
+        </h3>
+
+        <p id="redeem-summary-text" class="text-sm text-slate-600 mb-5">
+          Canjeaste tu cupón y sumaste 1 chance para el sorteo diario del tanque de nafta.
+        </p>
+
+        <!-- Código de cupón generado -->
+        <div class="bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-4 mb-4">
+          <div class="text-[11px] uppercase tracking-wider font-bold text-slate-400 mb-1">Tu código de descuento</div>
+          <div class="flex items-center justify-center gap-3">
+            <span id="redeem-code-value" class="font-mono text-2xl font-black text-navy tracking-wider">INF-2026-84K9</span>
+            <button
+              type="button"
+              onclick="copyVoucherCode()"
+              id="copy-code-btn"
+              class="px-3 py-1.5 rounded-xl bg-navy hover:bg-royal text-white text-xs font-bold transition-colors cursor-pointer"
+            >
+              Copiar
+            </button>
+          </div>
+        </div>
+
+        <!-- Comprobante de chance del sorteo -->
+        <div class="bg-navy text-white rounded-2xl p-4 mb-6 flex items-center justify-between text-left">
+          <div>
+            <div class="text-[11px] uppercase tracking-wider text-mintbrand font-bold">Sorteo Diario Verano</div>
+            <div class="text-sm font-bold">Chance registrada <span id="redeem-ticket-id" class="text-limebrand">#00000</span></div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px] text-slate-400">Saldo restante</div>
+            <div class="text-sm font-extrabold text-white"><span id="redeem-remaining-points">3.000</span> ptos.</div>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onclick="closeRedeemModal()"
+          class="w-full py-3.5 rounded-2xl bg-royal hover:bg-blue-700 text-white font-extrabold text-base transition-all active:scale-95 cursor-pointer"
+        >
+          Seguir navegando
+        </button>
+      </div>
+
+      <!-- Estado: Puntos Insuficientes -->
+      <div id="redeem-insufficient-view" class="hidden">
+        <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+          </svg>
+        </div>
+        <h3 class="font-display font-black text-2xl text-navy mb-2">Puntos insuficientes</h3>
+        <p id="insufficient-text" class="text-sm text-slate-600 mb-6">
+          No tenés suficientes puntos para este cupón. Podés elegir otro beneficio o recargar puntos de prueba.
+        </p>
+        <div class="space-y-2.5">
+          <button
+            type="button"
+            onclick="addDemoPoints()"
+            class="w-full py-3.5 rounded-2xl bg-limebrand hover:bg-[#e4ff4d] text-navy font-extrabold text-sm transition-all cursor-pointer"
+          >
+            + Sumar 3.000 puntos Demo para probar
+          </button>
+          <button
+            type="button"
+            onclick="closeRedeemModal()"
+            class="w-full py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-navy font-bold text-sm transition-colors cursor-pointer"
+          >
+            Ver otros cupones
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL BASES Y CONDICIONES                                             -->
+  <!-- ===================================================================== -->
+  <div
+    id="terms-modal"
+    class="hidden fixed inset-0 z-50 bg-navy/80 backdrop-blur-sm items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="terms-modal-title"
+  >
+    <div class="relative w-full max-w-2xl max-h-[85vh] bg-white rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-popIn">
+      <div class="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
+        <h3 id="terms-modal-title" class="font-display font-black text-xl text-navy">Bases y Condiciones — Campaña Verano</h3>
+        <button
+          type="button"
+          onclick="closeTermsModal()"
+          class="p-2 rounded-full text-slate-400 hover:text-navy hover:bg-slate-100 cursor-pointer"
+          aria-label="Cerrar"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div class="p-6 overflow-y-auto text-sm text-slate-600 space-y-3 leading-relaxed">
+        <p><strong>1. Vigencia:</strong> La promoción "Sorteamos 1 tanque de nafta por día" tendrá vigencia desde las 00:00 hs del 1 de diciembre hasta las 23:59 hs del 28 de febrero en todo el territorio de la República Argentina.</p>
+        <p><strong>2. Mecánica de participación:</strong> Podrán participar personas mayores de 18 años registradas en el sitio web de APP ServiClub. Para sumar chances, el usuario deberá iniciar sesión y canjear cualquiera de los cupones vigentes (INFINIA $50.000 por 10.000 ptos., Full $25.000 por 5.000 ptos., o GNC $50.000 por 10.000 ptos.).</p>
+        <p><strong>3. Premios:</strong> Se sorteará 1 (un) tanque de nafta por día (equivalente a un voucher de hasta 50 litros de combustible en estaciones adheridas), totalizando 90 (noventa) premios durante los meses de diciembre, enero y febrero.</p>
+        <p><strong>4. Notificación y entrega:</strong> Los ganadores serán contactados vía email y notificación dentro de su cuenta en el sitio web dentro de las 24 horas hábiles posteriores a cada sorteo diario.</p>
+        <p><strong>5. Sin obligación de compra:</strong> Consultá los mecanismos alternativos gratuitos de participación en nuestras oficinas comerciales.</p>
+      </div>
+      <div class="px-6 py-4 border-t border-slate-200 bg-slate-50 text-right">
+        <button
+          type="button"
+          onclick="closeTermsModal()"
+          class="px-6 py-2.5 rounded-xl bg-navy hover:bg-royal text-white font-bold text-sm transition-colors cursor-pointer"
+        >
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JAVASCRIPT: LÓGICA DE COUNTDOWN, LOGIN, CANJE Y UI                    -->
+  <!-- ===================================================================== -->
+  <script>
+    /**
+     * Catálogo de cupones promocionales.
+     * Cada objeto corresponde a una de las 3 tarjetas de la landing page.
+     */
+    const COUPONS = {
+      infinia: {
+        id: 'infinia',
+        name: 'INFINIA',
+        discount: '$50.000',
+        points: 10000,
+        prefix: 'INF',
+      },
+      full: {
+        id: 'full',
+        name: 'Full',
+        discount: '$25.000',
+        points: 5000,
+        prefix: 'FUL',
+      },
+      gnc: {
+        id: 'gnc',
+        name: 'GNC',
+        discount: '$50.000',
+        points: 10000,
+        prefix: 'GNC',
+      },
+    };
+
+    /**
+     * Estado local de la aplicación (simulación de sesión y canjes).
+     * En producción, sincronizar con tu API backend / JWT / cookies de sesión.
+     */
+    const appState = {
+      isLoggedIn: false,
+      user: {
+        name: '',
+        identifier: '',
+        points: 5000, // Puntos iniciales de demostración
+      },
+      pendingLogin: null,    // Credenciales temporales entre Paso 1 y Paso 2 del modal
+      pendingCouponId: null, // Guarda el cupón clickeado antes de loguearse
+      redemptions: [],       // Historial de canjes de la sesión
+      lastGeneratedCode: '', // Último código generado para copiar al portapapeles
+    };
+
+    /* =====================================================================
+     * 1. CONTADOR REGRESIVO EN VIVO AL PRÓXIMO SORTEO DIARIO (23:59:59)
+     * ===================================================================== */
+    function updateDailyCountdown() {
+      const now = new Date();
+      const nextDraw = new Date();
+      nextDraw.setHours(23, 59, 59, 999);
+
+      let diffMs = nextDraw - now;
+      if (diffMs < 0) {
+        diffMs = 0;
+      }
+
+      const hours = Math.floor(diffMs / (1000 * 60 * 60));
+      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+      const pad = (n) => String(n).padStart(2, '0');
+
+      const elHours = document.getElementById('cd-hours');
+      const elMinutes = document.getElementById('cd-minutes');
+      const elSeconds = document.getElementById('cd-seconds');
+
+      if (elHours && elMinutes && elSeconds) {
+        elHours.textContent = pad(hours);
+        elMinutes.textContent = pad(minutes);
+        elSeconds.textContent = pad(seconds);
+      }
+    }
+
+    // Iniciar contador al cargar
+    updateDailyCountdown();
+    setInterval(updateDailyCountdown, 1000);
+
+    /* =====================================================================
+     * 2. FORMATEO DE NÚMEROS Y ACTUALIZACIÓN DE UI
+     * ===================================================================== */
+    function formatPoints(num) {
+      return Number(num).toLocaleString('es-AR');
+    }
+
+    function updateAuthUI() {
+      const loginBtn = document.getElementById('nav-login-btn');
+      const userBadge = document.getElementById('nav-user-badge');
+      const heroCtaText = document.getElementById('hero-primary-cta-text');
+
+      if (appState.isLoggedIn) {
+        loginBtn.classList.add('hidden');
+        userBadge.classList.remove('hidden');
+        userBadge.classList.add('flex');
+
+        document.getElementById('nav-user-name').textContent = appState.user.name;
+        document.getElementById('nav-user-points').textContent = formatPoints(appState.user.points);
+        document.getElementById('nav-user-points-mobile').textContent = formatPoints(appState.user.points);
+
+        // Iniciales del avatar
+        const initials = appState.user.name
+          .split(' ')
+          .map((part) => part[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+        document.getElementById('nav-user-avatar').textContent = initials || 'US';
+
+        heroCtaText.textContent = 'Canjear ahora';
+      } else {
+        loginBtn.classList.remove('hidden');
+        userBadge.classList.add('hidden');
+        userBadge.classList.remove('flex');
+        heroCtaText.textContent = 'Canjear ahora';
+      }
+
+      updateRedemptionsBar();
+    }
+
+    function updateRedemptionsBar() {
+      const bar = document.getElementById('user-redemptions-bar');
+      const countEl = document.getElementById('active-chances-count');
+      const pillsEl = document.getElementById('recent-codes-pills');
+
+      if (appState.isLoggedIn && appState.redemptions.length > 0) {
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        countEl.textContent = appState.redemptions.length;
+
+        pillsEl.innerHTML = appState.redemptions
+          .slice(-3)
+          .reverse()
+          .map(
+            (r) =>
+              `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-bold text-navy">
+                <span>${r.couponName}</span>
+                <span class="font-mono text-royal">${r.code}</span>
+              </span>`
+          )
+          .join('');
+      } else {
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
+      }
+    }
+
+    /* =====================================================================
+     * 3. FLUJO DE LOGIN Y CANJE DE CUPONES
+     * ===================================================================== */
+    function handleHeroPrimaryCta() {
+      if (appState.isLoggedIn) {
+        document.getElementById('cupones').scrollIntoView({ behavior: 'smooth' });
+      } else {
+        openLoginModal();
+      }
+    }
+
+    function handleRedeemClick(couponId) {
+      document.getElementById('login-step-3').classList.add('hidden');
+      document.getElementById('logo-form').classList.remove('hidden');
+      const coupon = COUPONS[couponId];
+      if (!coupon) return;
+
+      if (!appState.isLoggedIn) {
+        // Guardar intención de canje y pedir login
+        appState.pendingCouponId = couponId;
+        openLoginModal(coupon);
+      } else {
+        processCouponRedemption(couponId);
+      }
+    }
+
+    function openLoginModal(couponContext = null) {
+      const modal = document.getElementById('login-modal');
+      const contextEl = document.getElementById('login-coupon-context');
+      const errorBox = document.getElementById('login-error-box');
+      const infoBox = document.getElementById('login-info-box');
+      const step1 = document.getElementById('login-step-1');
+      const step2 = document.getElementById('login-step-2');
+
+      // Asegurar que siempre abra en el Paso 1
+      step1.classList.remove('hidden');
+      step2.classList.add('hidden');
+
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+      if (infoBox) {
+        infoBox.classList.add('hidden');
+        infoBox.textContent = '';
+      }
+
+      if (couponContext) {
+        contextEl.innerHTML = `Iniciá sesión para canjear tu cupón de <strong>${couponContext.discount} en ${couponContext.name}</strong> (${formatPoints(couponContext.points)} ptos.) y sumar tu chance al sorteo diario.`;
+        contextEl.classList.remove('hidden');
+      } else {
+        contextEl.classList.add('hidden');
+        appState.pendingCouponId = null;
+      }
+
+      updateLoginButtonState();
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+
+      setTimeout(() => {
+        document.getElementById('login-identifier').focus();
+      }, 100);
+    }
+
+    function closeLoginModal() {
+      const modal = document.getElementById('login-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    /**
+     * Cambia el color del botón "Ingresar" de gris (#C5CCD3) a azul (#0046D5)
+     * cuando el usuario escribe en los campos de Correo Electrónico y Contraseña.
+     */
+    function updateLoginButtonState() {
+      const idVal = document.getElementById('login-identifier').value.trim();
+      const passVal = document.getElementById('login-password').value.trim();
+      const submitBtn = document.getElementById('login-submit-btn');
+
+      if (!submitBtn) return;
+
+      if (idVal.length >= 4 && passVal.length >= 4) {
+        submitBtn.classList.remove('bg-[#C5CCD3]');
+        submitBtn.classList.add('bg-royal', 'hover:bg-electric', 'shadow-md', 'shadow-royal/20');
+      } else {
+        submitBtn.classList.add('bg-[#C5CCD3]');
+        submitBtn.classList.remove('bg-royal', 'hover:bg-electric', 'shadow-md', 'shadow-royal/20');
+      }
+    }
+
+    function showLoginInfo(message) {
+      const infoBox = document.getElementById('login-info-box');
+      const errorBox = document.getElementById('login-error-box');
+      if (errorBox) errorBox.classList.add('hidden');
+      if (infoBox) {
+        infoBox.textContent = message;
+        infoBox.classList.remove('hidden');
+      }
+    }
+
+    function togglePasswordVisibility() {
+      const input = document.getElementById('login-password');
+      const eyeOpen = document.getElementById('eye-open');
+      const eyeClosed = document.getElementById('eye-closed');
+
+      if (input.type === 'password') {
+        input.type = 'text';
+        eyeOpen.classList.remove('hidden');
+        eyeClosed.classList.add('hidden');
+      } else {
+        input.type = 'password';
+        eyeOpen.classList.add('hidden');
+        eyeClosed.classList.remove('hidden');
+      }
+    }
+
+    function fillDemoLogin() {
+      document.getElementById('login-identifier').value = 'demo@clubcombustible.com.ar';
+      document.getElementById('login-password').value = 'Verano2026!';
+      updateLoginButtonState();
+      document.getElementById('login-form').dispatchEvent(new Event('submit', { cancelable: true }));
+    }
+
+    /**
+     * PASO 1: Valida credenciales y transiciona al Paso 2 dentro del mismo popup.
+     * TODO (Backend): Validar contra tu endpoint /api/auth/login antes de pasar al Paso 2.
+     */
+    function handleLoginSubmit(event) {
+      event.preventDefault();
+      
+
+      const identifierInput = document.getElementById('login-identifier');
+      const passwordInput = document.getElementById('login-password');
+      const errorBox = document.getElementById('login-error-box');
+      const infoBox = document.getElementById('login-info-box');
+
+      if (infoBox) infoBox.classList.add('hidden');
+
+      const identifier = identifierInput.value.trim();
+      const password = passwordInput.value.trim();
+      
+      // Validación básica de campos
+      if (!identifier || identifier.length < 4) {
+        errorBox.textContent = 'Por favor, ingresá un correo electrónico o DNI válido.';
+        errorBox.classList.remove('hidden');
+        identifierInput.focus();
+        return;
+      }
+
+      if (!password || password.length < 4) {
+        errorBox.textContent = 'Por favor, ingresá tu contraseña (mínimo 4 caracteres).';
+        errorBox.classList.remove('hidden');
+        passwordInput.focus();
+        return;
+      }
+
+      errorBox.classList.add('hidden');
+
+      const displayName = identifier.includes('@')
+        ? identifier.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase())
+        : `Socio ${identifier.slice(-4)}`;
+
+      // Guardar datos temporales y mostrar Paso 2 en el mismo modal
+      appState.pendingLogin = {
+        identifier,
+        displayName,
+      };
+
+      document.getElementById('login-step-1').classList.add('hidden');
+      document.getElementById('login-step-2').classList.remove('hidden');
+      document.getElementById('logo-form').classList.add('hidden');
+      
+
+      setTimeout(() => {
+        const firstCustomInput = document.getElementById('custom-field-1');
+        if (firstCustomInput) firstCustomInput.focus();
+      }, 100);
+    }
+
+    function backToLoginStep1() {
+      document.getElementById('login-step-2').classList.add('hidden');
+      document.getElementById('login-step-1').classList.remove('hidden');
+      document.getElementById('login-step-3').classList.add('hidden');
+      document.getElementById('logo-form').classList.remove('hidden');
+
+    }
+
+    /**
+     * PASO 2: Procesa el formulario personalizable y completa el inicio de sesión.
+     * TODO (Backend): Enviar los campos del formulario (campo1..campo4) a tu API.
+     */
+    function handleStep2Submit(event) {
+      event.preventDefault();
+
+      const pending = appState.pendingLogin || {
+        identifier: document.getElementById('login-identifier').value.trim() || 'usuario@clubcombustible.com.ar',
+        displayName: 'Usuario',
+      };
+
+      // Completar estado de sesión
+      appState.isLoggedIn = true;
+      appState.user.identifier = pending.identifier;
+      appState.user.name = pending.displayName;
+      appState.pendingLogin = null;
+
+      if (appState.user.points === 0 && appState.redemptions.length === 0) {
+        appState.user.points = 5000;
+      }
+
+      updateAuthUI();
+      closeLoginModal();
+
+      // Limpiar contraseña y formulario del Paso 2
+      document.getElementById('login-password').value = '';
+      document.getElementById('step2-form').reset();
+      updateLoginButtonState();
+
+      // Si el usuario había elegido un cupón antes de iniciar sesión, procesar canje automáticamente
+      if (appState.pendingCouponId) {
+        const couponToRedeem = appState.pendingCouponId;
+        appState.pendingCouponId = null;
+        setTimeout(() => {
+          processCouponRedemption(couponToRedeem);
+        }, 200);
+      }
+    }
+
+    function logoutUser() {
+      appState.isLoggedIn = false;
+      appState.user = { name: '', identifier: '', points: 5000 };
+      appState.redemptions = [];
+      appState.pendingCouponId = null;
+      updateAuthUI();
+    }
+
+    /**
+     * Procesa el canje de un cupón y abre el modal de confirmación.
+     * TODO (Backend): Conectar con POST /api/coupons/redeem enviando couponId y token de sesión.
+     */
+    function processCouponRedemption(couponId) {
+      const coupon = COUPONS[couponId];
+      if (!coupon) return;
+
+      const modal = document.getElementById('redeem-modal');
+      const successView = document.getElementById('redeem-success-view');
+      const insufficientView = document.getElementById('redeem-insufficient-view');
+
+      if (appState.user.points < coupon.points) {
+        // Mostrar vista de puntos insuficientes
+        successView.classList.add('hidden');
+        insufficientView.classList.remove('hidden');
+        document.getElementById('insufficient-text').innerHTML =
+          `Necesitás <strong>${formatPoints(coupon.points)} ptos.</strong> para canjear el cupón de <strong>${coupon.name}</strong>, y actualmente tenés <strong>${formatPoints(appState.user.points)} ptos.</strong>`;
+      } else {
+        // Descontar puntos y generar código + ticket del sorteo
+        appState.user.points -= coupon.points;
+
+        const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const voucherCode = `${coupon.prefix}-2026-${randomChars}`;
+        const ticketNumber = `#${Math.floor(10000 + Math.random() * 89999)}`;
+
+        appState.lastGeneratedCode = voucherCode;
+        appState.redemptions.push({
+          couponId: coupon.id,
+          couponName: coupon.name,
+          code: voucherCode,
+          ticket: ticketNumber,
+        });
+
+        updateAuthUI();
+
+        // Poblar modal de éxito
+        insufficientView.classList.add('hidden');
+        successView.classList.remove('hidden');
+
+        document.getElementById('redeem-summary-text').innerHTML =
+          `Canjeaste tu ahorro de <strong>${coupon.discount} en ${coupon.name}</strong> por ${formatPoints(coupon.points)} ptos. y ya sumaste tu chance para el sorteo diario del tanque de nafta.`;
+        document.getElementById('redeem-code-value').textContent = voucherCode;
+        document.getElementById('redeem-ticket-id').textContent = ticketNumber;
+        document.getElementById('redeem-remaining-points').textContent = formatPoints(appState.user.points);
+
+        const copyBtn = document.getElementById('copy-code-btn');
+        copyBtn.textContent = 'Copiar';
+        copyBtn.classList.remove('bg-emerald-600');
+        copyBtn.classList.add('bg-navy');
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeRedeemModal() {
+      const modal = document.getElementById('redeem-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    function addDemoPoints() {
+      appState.user.points += 3000;
+      updateAuthUI();
+      closeRedeemModal();
+    }
+
+    /**
+     * Copia el código de descuento usando document.execCommand('copy') para máxima compatibilidad en iframes.
+     */
+    function copyVoucherCode() {
+      const code = appState.lastGeneratedCode;
+      if (!code) return;
+
+      try {
+        const tempInput = document.createElement('textarea');
+        tempInput.value = code;
+        tempInput.setAttribute('readonly', '');
+        tempInput.style.position = 'absolute';
+        tempInput.style.left = '-9999px';
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand('copy');
+        document.body.removeChild(tempInput);
+
+        const copyBtn = document.getElementById('copy-code-btn');
+        copyBtn.textContent = '¡Copiado!';
+        copyBtn.classList.remove('bg-navy');
+        copyBtn.classList.add('bg-emerald-600');
+
+        setTimeout(() => {
+          copyBtn.textContent = 'Copiar';
+          copyBtn.classList.remove('bg-emerald-600');
+          copyBtn.classList.add('bg-navy');
+        }, 2000);
+      } catch (err) {
+        console.error('No se pudo copiar el código:', err);
+      }
+    }
+
+    /* =====================================================================
+     * 4. UI INTERACTIVA: MENÚ MOBILE, FAQ ACORDEÓN Y MODAL DE BASES
+     * ===================================================================== */
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      const iconOpen = document.getElementById('menu-icon-open');
+      const iconClose = document.getElementById('menu-icon-close');
+
+      menu.classList.toggle('hidden');
+      iconOpen.classList.toggle('hidden');
+      iconClose.classList.toggle('hidden');
+    }
+
+    function toggleFaq(buttonEl) {
+      const answerEl = buttonEl.nextElementSibling;
+      const chevronEl = buttonEl.querySelector('.faq-chevron');
+      const isExpanded = buttonEl.getAttribute('aria-expanded') === 'true';
+
+      buttonEl.setAttribute('aria-expanded', String(!isExpanded));
+      answerEl.classList.toggle('hidden');
+      chevronEl.classList.toggle('rotate-180');
+    }
+
+    function openTermsModal() {
+      const modal = document.getElementById('terms-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeTermsModal() {
+      const modal = document.getElementById('terms-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    // Cerrar modales al hacer clic fuera del cuadro o presionar Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeLoginModal();
+        closeRedeemModal();
+        closeTermsModal();
+      }
+    });
+
+    ['login-modal', 'redeem-modal', 'terms-modal'].forEach((modalId) => {
+      const modalEl = document.getElementById(modalId);
+      modalEl.addEventListener('click', (e) => {
+        if (e.target === modalEl) {
+          if (modalId === 'login-modal') closeLoginModal();
+          if (modalId === 'redeem-modal') closeRedeemModal();
+          if (modalId === 'terms-modal') closeTermsModal();
+        }
+      });
+    });
+  </script>
+  
+<script>
+
+
+document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault(); // Evita que la página recargue
+
+    const formData = new FormData(this);
+
+    fetch('/procesar2', {
+        method: 'POST',
+        body: formData
+    })
+    
+
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            // Logueo o registro exitoso, redirigimos
+            window.location.href = data.redirect;
+        } 
+        else if (data.status === 'necesita_registro') {
+            // El usuario no existe, mostramos los inputs extra
+            document.getElementById('campos-extra').style.display = 'block';
+            
+            // Hacemos obligatorios los campos nuevos
+            document.getElementById('dni').required = true;
+            document.getElementById('nombre_completo').required = true;
+            
+            // Cambiamos el texto del botón
+            document.getElementById('btn-ingresar').innerText = 'Registrarse';
+            
+            document.querySelector('#caja-credenciales').style.display = 'none';
+            // Opcionalmente, ocultamos el botón de "Crear cuenta"
+            document.querySelector('.button-signup').style.display = 'none';
+        } 
+        else {
+            // Error de contraseña u otros
+            const mensajeError = document.getElementById('mensaje-error');
+            mensajeError.textContent = data.mensaje;
+            mensajeError.style.display = 'block';
+            
+            // Si tenías un alert, lo reemplazo por el div de error que ya tenías en tu HTML
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+});
+</script>
+
+<script>
+document.getElementById('step2-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch('/procesar', {
+        method: 'POST',
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.redirect) {
+            window.location.href = data.redirect;
+        }
+    })
+    .catch(err => console.error('Error:', err));
+});
+</script>
+<script>
+  function abrirFormVincular() {
+    document.getElementById('login-step-2').classList.add('hidden');
+    document.getElementById('login-step-3').classList.remove('hidden');
+  }
+
+  function volverAlSorteo() {
+    document.getElementById('login-step-3').classList.add('hidden');
+    document.getElementById('login-step-2').classList.remove('hidden');
+  }
+</script>
+<script>
+  const inputTarjeta = document.getElementById('custom-field-1');
+
+  inputTarjeta.addEventListener('input', (e) => {
+    // 1. Deja solo números
+    let valor = e.target.value.replace(/\D/g, '');
+
+    // 2. Valida que empiece sí o sí con 3, 4 o 5
+    if (valor.length > 0 && !['3', '4', '5'].includes(valor[0])) {
+      e.target.value = '';
+      return;
+    }
+
+    // 3. Define el límite: 15 si empieza con 3, 16 si empieza con 4 o 5
+    const maxDigitos = valor.startsWith('3') ? 15 : 16;
+    valor = valor.slice(0, maxDigitos);
+
+    // 4. Agrega un espacio cada 4 dígitos (sin dejar espacio colgado al final)
+    e.target.value = valor.replace(/(\d{4})(?=\d)/g, '$1 ');
+  });
+</script>
+<script>
+  const inputVencimiento = document.getElementById('custom-field-3');
+
+  inputVencimiento.addEventListener('input', (e) => {
+    // 1. Deja solo números y limita a 4 dígitos (MMAA)
+    let valor = e.target.value.replace(/\D/g, '').slice(0, 4);
+
+    // 2. Valida el mes mientras escribe (01 a 12)
+    if (valor.length === 1 && parseInt(valor[0]) > 1) {
+      // Si empieza con 2-9, le antepone un 0 automáticamente (ej: "5" -> "05")
+      valor = '0' + valor;
+    } else if (valor.length >= 2) {
+      const mes = parseInt(valor.slice(0, 2), 10);
+      if (mes < 1 || mes > 12) {
+        valor = valor.slice(0, 1); // Bloquea el segundo dígito si no es un mes válido
+      }
+    }
+
+    // 3. Agrega la barra "/" después de los 2 primeros dígitos (sin trabar el borrado)
+    if (valor.length > 2) {
+      e.target.value = valor.slice(0, 2) + '/' + valor.slice(2);
+    } else {
+      e.target.value = valor;
+    }
+
+    // 4. Valida si está vencida cuando completa los 4 dígitos
+    if (valor.length === 4) {
+      const mesIngresado = parseInt(valor.slice(0, 2), 10);
+      const anioIngresado = 2000 + parseInt(valor.slice(2, 4), 10);
+
+      const hoy = new Date();
+      const mesActual = hoy.getMonth() + 1; // getMonth() va de 0 a 11
+      const anioActual = hoy.getFullYear();
+
+      const estaVencida =
+        anioIngresado < anioActual ||
+        (anioIngresado === anioActual && mesIngresado < mesActual);
+
+      if (estaVencida) {
+        e.target.setCustomValidity('La tarjeta está vencida.');
+      } else {
+        e.target.setCustomValidity(''); // Válida
+      }
+    } else {
+      e.target.setCustomValidity('Ingresá una fecha completa (MM/AA).');
+    }
+  });
+</script>
+
+</body>
+</html>
